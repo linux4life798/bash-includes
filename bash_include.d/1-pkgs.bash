@@ -63,7 +63,7 @@ pkg-list() {
   assoc-rm-keys pkgs "${pkgs_ignores[@]}"
   assoc-add-keys pkgs "${pkgs_forced[@]}"
 
-  xargs -n1 <<<"${pkgs[*]}" | sort
+  xargs --no-run-if-empty -n1 <<<"${pkgs[*]}" | sort
 }
 
 # Usage: pkg-find-control [pkg1 [pkg2 [...]]]
@@ -356,6 +356,9 @@ pkg-upgrade() {
 # Usage: pkg-ignore
 pkg-ignores() {
   local file="${_PKG_DIR}/config/ignores"
+  if [[ ! -e "${file}" ]]; then
+    return 0
+  fi
   _pkg-file-tokens "${file}" | sort
 }
 
@@ -363,13 +366,18 @@ pkg-ignores() {
 #
 # Usage: pkg-list-all
 pkg-list-all() {
-  timeout 5 find "${_PKG_DIR}" -type f -name '*.equivs' | xargs -d'\n' -L1 basename -s '.equivs'
+  timeout 5 find "${_PKG_DIR}" -type f -name '*.equivs' | \
+    xargs --no-run-if-empty -d'\n' -L1 basename -s '.equivs'
 }
 
 # List the packages forced for a given hostname.
 #
 # Usage: pkg-list-forced-hostname [hostname1 [hostname2...]]
 pkg-list-forced-hostname() {
+  if [[ ! -d "${_PKG_DIR}/config" ]]; then
+    return 0
+  fi
+
   for host; do
     [ -t 1 ] && echo "# Hostname '${host}'" >&2
     local hfile
