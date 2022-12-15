@@ -247,6 +247,15 @@ pkg-build() {
     echo "# pkg_dir=${pkg_dir}"
     echo "# tmp=${tmp}"
 
+    local pkg_control_base="$(basename "${pkg_control}")"
+    local pkg_control_name
+    pkg_control_name="$(_pkg-field-control "${pkg_control}" Package)"
+    if [[ "${pkg_control_name}.equivs" != "${pkg_control_base}" ]]; then
+      echo "Error - Control file name '${pkg_control_base}' doesn't match name " \
+        "in control file '${pkg_control_name}'."
+      return 1
+    fi
+
     # Copy over all pkg content except other .deb files
     echo "# Copying over pkg contents"
     # find "${pkg_dir}" -maxdepth 1 ! -path "${pkg_dir}" | grep -v ".deb$"
