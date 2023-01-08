@@ -97,8 +97,6 @@ bash_aliases-update() {
 	fi
 }
 
-# Include local bash_include.d
-binclude-dir "${_BINCLUDE_LOCAL}"
 # Include remote bash_include.d
 if binclude-timeout ls "${_BINCLUDE_REMOTE}" &>/dev/null; then
 	binclude-dir "${_BINCLUDE_REMOTE}"
@@ -108,6 +106,10 @@ else
 	echo "Remote bash includes not available. Loading from cache." >&2
 	binclude-cache-use "${_BINCLUDE_REMOTE}"
 fi
+
+# Include local bash_include.d
+# Include last so that it can override remote.
+binclude-dir "${_BINCLUDE_LOCAL}"
 
 unset bash_aliases-update
 unset binclude-cache-use
