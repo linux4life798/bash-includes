@@ -12,15 +12,27 @@ _BINCLUDE_LOCAL="$HOME/.bash_include.d"
 # The remote bash includes directory that will be sourced.
 # A cached version will be used if the remote path is unavailable.
 _BINCLUDE_REMOTE="$HOME/lib/bash-includes/bash_include.d"
-# The remote bash_aliases file that will auto update this file.
-_BASH_ALIASES_REMOTE="$HOME/lib/bash-includes/bash_aliases"
+
 # The local directory where we save the remote bash include's offline cache.
 _BINCLUDE_CACHE="$HOME/.bash_include_cache.d"
+# The remote bash_aliases file that will auto update this file.
+_BASH_ALIASES_REMOTE="$HOME/lib/bash-includes/bash_aliases"
+
+# Usage: bash_aliases-update
+#
+# Update the local copy of ~/.bash_aliases from the remote copy.
+bash_aliases-update() {
+	if binclude-timeout ls "${_BASH_ALIASES_REMOTE}" &>/dev/null; then
+		binclude-timeout cp "${_BASH_ALIASES_REMOTE}" "${HOME}/.bash_aliases"
+	fi
+}
 
 # Usage: binclude-timeout <cmd> [args]
 #
 # Enforces a timeout for bash-include operations that may hang.
 binclude-timeout() {
+	# This waits 3 seconds before sending SIGTERM.
+	# It then waits the additional 1 second before sending SIGKILL.
 	timeout --kill-after=1 3 "$@"
 }
 
@@ -90,33 +102,23 @@ binclude-cache-use() {
 	return 1
 }
 
-# Update the local copy of ~/.bash_aliases from the remote copy.
-bash_aliases-update() {
-	if binclude-timeout ls "${_BASH_ALIASES_REMOTE}" &>/dev/null; then
-		binclude-timeout cp "${_BASH_ALIASES_REMOTE}" "${HOME}/.bash_aliases"
+# Usage: binclude-remote <remote-dir>
+#
+# Include remote dir utilizing the cache mechanism.
+binclude-remote() {
+	local remote_dir="$1"
+
+	# Running ls is forcing the remote filesystem to cache all
+	# file listings, which will be globbed on later.
+	if binclude-timeout ls "${remote_dir}" &>/dev/null; then
+		binclude-dir "${remote_dir}"
+		( binclude-cache-update "${remote_dir}" & )
+		( bash_aliases-update & )
+	else
+		echo "Remote bash includes not available. Loading from cache." >&2
+		binclude-cache-use "${remote_dir}"
 	fi
 }
-
-# Include remote bash_include.d
-if binclude-timeout ls "${_BINCLUDE_REMOTE}" &>/dev/null; then
-	binclude-dir "${_BINCLUDE_REMOTE}"
-	( binclude-cache-update "${_BINCLUDE_REMOTE}" & )
-	( bash_aliases-update & )
-else
-	echo "Remote bash includes not available. Loading from cache." >&2
-	binclude-cache-use "${_BINCLUDE_REMOTE}"
-fi
-
-# Include local bash_include.d
-# Include last so that it can override remote.
-binclude-dir "${_BINCLUDE_LOCAL}"
-
-unset bash_aliases-update
-unset binclude-cache-use
-unset binclude-cache-update
-unset binclude-cache-file-name
-unset binclude-dir
-unset binclude-timeout
 
 # Usage: binclude-clean
 #
@@ -124,3 +126,12 @@ unset binclude-timeout
 binclude-clean() {
 	gio trash "${_BINCLUDE_CACHE}"
 }
+
+#####################################################################
+
+# Include remote bash_include.d
+binclude-remote "${_BINCLUDE_REMOTE}"
+
+# Include local bash_include.d
+# Include last so that it can override remote.
+binclude-dir "${_BINCLUDE_LOCAL}"
