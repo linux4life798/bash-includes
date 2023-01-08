@@ -64,7 +64,7 @@ binclude-remote() {
 # Clear the cache for remote include.
 binclude-clean() {
 	echo "# Removing ${_BINCLUDE_CACHE}."
-	gio trash "${_BINCLUDE_CACHE}"
+	gio trash -f "${_BINCLUDE_CACHE}"
 }
 
 #####################################################################
