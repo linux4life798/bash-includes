@@ -25,7 +25,7 @@ bi_timeout() {
 }
 
 
-_include_dir() {
+binclude_dir() {
 	local dir=$1
 
 	if [ -d "${dir}" ]; then
@@ -89,10 +89,10 @@ _update_bash_aliases() {
 }
 
 # Include local bash_include.d
-_include_dir "$_BI_INCLUDE_LOCAL"
+binclude_dir "$_BI_INCLUDE_LOCAL"
 # Include remote bash_include.d
 if bi_timeout ls "${_BI_INCLUDE_REMOTE}" &>/dev/null; then
-	_include_dir "${_BI_INCLUDE_REMOTE}"
+	binclude_dir "${_BI_INCLUDE_REMOTE}"
 	( _include_dir_cache_update "${_BI_INCLUDE_REMOTE}" & )
 	( _update_bash_aliases & )
 else
@@ -104,5 +104,5 @@ unset _update_bash_aliases
 unset _include_dir_cache_use
 unset _include_dir_cache_update
 unset _include_dir_cache_file
-unset _include_dir
+unset binclude_dir
 unset bi_timeout
