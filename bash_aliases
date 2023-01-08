@@ -31,19 +31,22 @@ _include_dir() {
 	fi
 }
 
-# Generate cache file name for a given directory
-_include_dir_cache_file() {
-	local dir=$1
+# Construct the cache file name for a given include directory.
+# Usage: cache_file=$(_include_dir_cache_file_name <path_to_dir>)
+_include_dir_cache_file_name() {
+	local dir="$1"
 
-	local cache_file=$dir
-	cache_file="${cache_file// /__}"
-	cache_file="${cache_file//\//___}.bash"
-	echo "${_BI_CACHE}/${cache_file}"
+	local cache_file="${dir}"
+	# Convert all whitespace to "--".
+	cache_file="${cache_file//[[:space:]]/--}"
+	# Convert all "/" path components to "++".
+	cache_file="${cache_file//\//++}"
+	echo "${_BI_CACHE}/${cache_file}.bash"
 }
 
 _include_dir_cache_update() {
 	local dir=$1
-	local cache_file=$(_include_dir_cache_file "$dir")
+	local cache_file=$(_include_dir_cache_file_name "$dir")
 
 	if [ ! -d "${dir}" ]; then
 		return 1
@@ -64,7 +67,7 @@ _include_dir_cache_update() {
 
 _include_dir_cache_use() {
 	local dir=$1
-	local cache_file=$(_include_dir_cache_file "$dir")
+	local cache_file=$(_include_dir_cache_file_name "$dir")
 
 	if [ -f "${cache_file}" ]; then
 		. "${cache_file}"
