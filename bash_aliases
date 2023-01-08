@@ -17,9 +17,13 @@ _BI_ALIASES_REMOTE="$HOME/lib/bash-includes/bash_aliases"
 # The local directory where we save the remote bash include's offline cache.
 _BI_CACHE="$HOME/.bash_include_cache.d"
 
-# The timeout command with its arguments to use for potentially blocking
-# commands.
-_BI_TIMEOUT=( timeout --kill-after=1 3 )
+# Enforces a timeout for bash-include operations that may hang.
+#
+# Usage: bi_timeout <cmd> [args]
+bi_timeout() {
+	timeout --kill-after=1 3 "$@"
+}
+
 
 _include_dir() {
 	local dir=$1
@@ -79,15 +83,15 @@ _include_dir_cache_use() {
 
 # Update the local copy of ~/.bash_aliases from the remote copy.
 _update_bash_aliases() {
-	if "${_BI_TIMEOUT[@]}" ls "${_BI_ALIASES_REMOTE}" &>/dev/null; then
-		"${_BI_TIMEOUT[@]}" cp "${_BI_ALIASES_REMOTE}" "${HOME}/.bash_aliases"
+	if bi_timeout ls "${_BI_ALIASES_REMOTE}" &>/dev/null; then
+		bi_timeout cp "${_BI_ALIASES_REMOTE}" "${HOME}/.bash_aliases"
 	fi
 }
 
 # Include local bash_include.d
 _include_dir "$_BI_INCLUDE_LOCAL"
-# Include DriveFS bash_include.d
-if "${_BI_TIMEOUT[@]}" ls "${_BI_INCLUDE_REMOTE}" &>/dev/null; then
+# Include remote bash_include.d
+if bi_timeout ls "${_BI_INCLUDE_REMOTE}" &>/dev/null; then
 	_include_dir "${_BI_INCLUDE_REMOTE}"
 	( _include_dir_cache_update "${_BI_INCLUDE_REMOTE}" & )
 	( _update_bash_aliases & )
@@ -101,4 +105,4 @@ unset _include_dir_cache_use
 unset _include_dir_cache_update
 unset _include_dir_cache_file
 unset _include_dir
-unset _BI_TIMEOUT
+unset bi_timeout
