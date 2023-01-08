@@ -23,6 +23,7 @@ _BASH_ALIASES_REMOTE="$HOME/lib/bash-includes/bash_aliases"
 # Update the local copy of ~/.bash_aliases from the remote copy.
 bash_aliases-update() {
 	if binclude-timeout ls "${_BASH_ALIASES_REMOTE}" &>/dev/null; then
+		touch "${HOME}/.bash_aliases"
 		binclude-timeout cp "${_BASH_ALIASES_REMOTE}" "${HOME}/.bash_aliases"
 	fi
 }
