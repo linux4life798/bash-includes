@@ -117,3 +117,10 @@ unset binclude-cache-update
 unset binclude-cache-file-name
 unset binclude-dir
 unset binclude-timeout
+
+# Usage: binclude-clean
+#
+# Clear the cache for remote include.
+binclude-clean() {
+	gio trash "${_BINCLUDE_CACHE}"
+}
