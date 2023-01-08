@@ -17,14 +17,16 @@ _BASH_ALIASES_REMOTE="$HOME/lib/bash-includes/bash_aliases"
 # The local directory where we save the remote bash include's offline cache.
 _BINCLUDE_CACHE="$HOME/.bash_include_cache.d"
 
-# Enforces a timeout for bash-include operations that may hang.
+# Usage: binclude-timeout <cmd> [args]
 #
-# Usage: bi_timeout <cmd> [args]
+# Enforces a timeout for bash-include operations that may hang.
 binclude-timeout() {
 	timeout --kill-after=1 3 "$@"
 }
 
-
+# Usage: binclude-dir <dir>
+#
+# Include all .bash files from a single directory level.
 binclude-dir() {
 	local dir=$1
 
@@ -35,12 +37,13 @@ binclude-dir() {
 	fi
 }
 
+# Usage: cache_file=$(binclude-cache-file-name <remote-dir>)
+#
 # Construct the cache file name for a given include directory.
-# Usage: cache_file=$(_include_dir_cache_file_name <path_to_dir>)
 binclude-cache-file-name() {
-	local dir="$1"
+	local remote_dir="$1"
 
-	local cache_file="${dir}"
+	local cache_file="${remote_dir}"
 	# Convert all whitespace to "--".
 	cache_file="${cache_file//[[:space:]]/--}"
 	# Convert all "/" path components to "++".
@@ -48,20 +51,23 @@ binclude-cache-file-name() {
 	echo "${_BINCLUDE_CACHE}/${cache_file}.bash"
 }
 
+# Usage: binclude-cache-update <remote-dir>
+#
+# Cache the remote-dir include for later use.
 binclude-cache-update() {
-	local dir=$1
-	local cache_file=$(binclude-cache-file-name "$dir")
+	local remote_dir="$1"
 
-	if [ ! -d "${dir}" ]; then
+	if [ ! -d "${remote_dir}" ]; then
 		return 1
 	fi
 	if [ ! -d "${_BINCLUDE_CACHE}" ]; then
 		mkdir -p "${_BINCLUDE_CACHE}"
 	fi
 
+	local cache_file=$(binclude-cache-file-name "${remote_dir}")
 	echo "# Generated on $(date)" >"${cache_file}"
-	if [ -d "${dir}" ]; then
-		for i in "${dir}"/*.bash; do
+	if [ -d "${remote_dir}" ]; then
+		for i in "${remote_dir}"/*.bash; do
 			echo >>"${cache_file}"
 			echo "# From $i" >>"${cache_file}"
 			grep -v "^[[:space:]]*#" "$i" >>"${cache_file}"
@@ -69,16 +75,19 @@ binclude-cache-update() {
 	fi
 }
 
+# Usage: binclude-cache-use <remote-dir>
+#
+# Source the cached version of the remote-dir include.
 binclude-cache-use() {
-	local dir=$1
-	local cache_file=$(binclude-cache-file-name "$dir")
+	local remote_dir="$1"
 
+	local cache_file=$(binclude-cache-file-name "${remote_dir}")
 	if [ -f "${cache_file}" ]; then
 		. "${cache_file}"
 		return 0
-	else
-		return 1
 	fi
+
+	return 1
 }
 
 # Update the local copy of ~/.bash_aliases from the remote copy.
@@ -89,7 +98,7 @@ bash_aliases-update() {
 }
 
 # Include local bash_include.d
-binclude-dir "$_BINCLUDE_LOCAL"
+binclude-dir "${_BINCLUDE_LOCAL}"
 # Include remote bash_include.d
 if binclude-timeout ls "${_BINCLUDE_REMOTE}" &>/dev/null; then
 	binclude-dir "${_BINCLUDE_REMOTE}"
