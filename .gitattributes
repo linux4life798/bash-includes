@@ -1,0 +1,2 @@
+# Ensure that git diff understands that bash_aliases is a bash script.
+bash_aliases diff=bash
